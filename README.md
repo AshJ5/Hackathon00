@@ -45,9 +45,11 @@ Create a React App for the frontend of your app. It should have the following:
 
 - Create a Express Server for the backend of your app. It should have the following:
 
-Express library
-Cors library
-dotenv library
+    - Express library
+    
+    - Cors library
+    
+    - dotenv library
 
 - Create at least 4 routes with at least 1 route for each HTTP Method (GET, POST, PUT, DELETE)
 
@@ -55,7 +57,7 @@ dotenv library
 
 ## BONUS: 
 
-- Use [Real Data]https://data.memphistn.gov/ in your app
+- Use [Real Data](https://data.memphistn.gov/) in your app
 - If a data source from the Memphis Data Hub give you .json, use that file in your server. 
 - If a data source is already hosted on an API, make an API call from your server and return results to your frontend app.
 
