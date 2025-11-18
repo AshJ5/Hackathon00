@@ -1,47 +1,101 @@
 const express = require('express');
 const cors = require('cors');
-// const dotenv = require('dotenv');
-// dotenv.config();
 require('dotenv').config();
 
 const app = express();
 
 app.use(cors());
+app.use(express.json());
 
-let langs = [];
+// Sample product data
+let products = [
+    { id: 1, name: 'Laptop', price: 999.99, category: 'Electronics', image: '💻' },
+    { id: 2, name: 'Wireless Mouse', price: 29.99, category: 'Electronics', image: '🖱️' },
+    { id: 3, name: 'USB-C Cable', price: 9.99, category: 'Accessories', image: '🔌' },
+    { id: 4, name: 'Monitor', price: 299.99, category: 'Electronics', image: '🖥️' },
+    { id: 5, name: 'Keyboard', price: 79.99, category: 'Electronics', image: '⌨️' }
+];
 
-app.get('/', (req, res) => {
-    res.send('Hello User\n' + 'there are ' + langs.length + ' langs\n' + langs[0]);
+let cart = [];
+
+// GET - Get all products
+app.get('/api/products', (req, res) => {
+    res.json(products);
 });
 
-app.post('/', (req, res) => {
-    if (req.query.lang) {
-        langs.push(req.query.lang);
-    }
-    res.send(langs);
+// GET - Get cart items
+app.get('/api/cart', (req, res) => {
+    res.json(cart);
 });
 
-app.put('/', (req, res) => {
-    if (req.query.index && req.query.lang) {
-        langs[req.query.index] = req.query.lang;
-        res.send(langs[req.query.index]);
-    } else {
-        res.send('No Update was made');
-    }
-    //localhost:3001/?lang=c++&index=0
+// POST - Add product to cart
+app.post('/api/cart', (req, res) => {
+    const { productId, quantity } = req.body;
+    const product = products.find(p => p.id === productId);
     
-});
-
-//API stands for ????
-app.delete('/', (req, res) => {
-    if (req.query.index) {
-        langs[req.query.index] = undefined;
-        res.send(req.query.index + ' was removed');
-    } else {
-        res.send('Nothing was removed. Send an index');
+    if (!product) {
+        return res.status(404).json({ error: 'Product not found' });
     }
+
+    const existingItem = cart.find(item => item.id === productId);
+    if (existingItem) {
+        existingItem.quantity += quantity || 1;
+    } else {
+        cart.push({ ...product, quantity: quantity || 1 });
+    }
+
+    res.json({ success: true, cart });
 });
 
-app.listen(3001, ()=>{
-    console.log('http://localhost:3001')
-})
+// PUT - Update cart item quantity
+app.put('/api/cart/:productId', (req, res) => {
+    const { productId } = req.params;
+    const { quantity } = req.body;
+
+    const cartItem = cart.find(item => item.id === parseInt(productId));
+    if (!cartItem) {
+        return res.status(404).json({ error: 'Item not in cart' });
+    }
+
+    cartItem.quantity = quantity;
+    res.json({ success: true, cart });
+});
+
+// DELETE - Remove item from cart
+app.delete('/api/cart/:productId', (req, res) => {
+    const { productId } = req.params;
+    
+    const initialLength = cart.length;
+    cart = cart.filter(item => item.id !== parseInt(productId));
+
+    if (cart.length === initialLength) {
+        return res.status(404).json({ error: 'Item not found in cart' });
+    }
+
+    res.json({ success: true, message: 'Item removed from cart', cart });
+});
+
+// Checkout endpoint
+app.post('/api/checkout', (req, res) => {
+    if (cart.length === 0) {
+        return res.status(400).json({ error: 'Cart is empty' });
+    }
+
+    const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const orderNumber = Math.floor(Math.random() * 10000);
+    
+    res.json({ 
+        success: true, 
+        message: 'Order placed successfully!',
+        orderNumber,
+        total: total.toFixed(2),
+        items: cart.length
+    });
+
+    cart = [];
+});
+
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => {
+    console.log(`Store API running at http://localhost:${PORT}`);
+});
